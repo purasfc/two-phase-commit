@@ -16,7 +16,9 @@ def create_transaction_log(txn_id, action : str, key : str, value : int, partici
         "action" : action,
         "key" : key,
         "value" : value,
-        "participants" : participants,
+        "state": state,
+        "participants" : [],
+        "responses" : {},
         "timestamp" : timestamp,
         "error" : error        
     }
@@ -24,18 +26,11 @@ def create_transaction_log(txn_id, action : str, key : str, value : int, partici
 class UpdateServicer(twopc_pb2_grpc.UpdateServicer):
     def Get(self, getRequest, context):
         
-        txn_id = f"txn-{getRequest.id}"
-        
-        create_transaction_log(txn_id, "get", getRequest.key, None)
-        
-        print(transaction_data)
-        
         for key_local, value_local in data["commited"].items():
             if getRequest.key == key_local:
                 return twopc_pb2.GetResponse(value=value_local)
             else:
                 print(f"there is not the value of {getRequest.key} in data")
-        create_transaction_log(txn_id, "put", getRequest.key, getRequest.value, None, "prepared", grpc.RpcError.details())
         print(f"sent the value of {getRequest.key} to client")
     
     def Put(self, putRequest, context):
@@ -59,8 +54,27 @@ class UpdateServicer(twopc_pb2_grpc.UpdateServicer):
             print(data)
             return twopc_pb2.PutResponse(empty="something is wrong")
         
-    #def Commmit(self, request, context):
+    def CommitQuery(self, request, context):
+        create_transaction_log(request.id, "rcvCommitQuery", None, None, None, None)
         
+        txn_id = f"txn-{request.commit_id}"
+        
+        if transaction_data[txn_id]["state"] == "prepared":
+            return twopc_pb2.CommitQueryResponse(ack="YES") 
+        
+    def Commmit(self, request, context):
+        # commit自体のidを渡すの忘れた
+        # create_transaction_log()
+        
+        txn_id = f"txn-{request.id}"
+        
+        key = transaction_data[txn_id]["key"]
+        value = transaction_data[txn_id]["value"]
+        
+        data["commited"][key] = value
+        del data["prepared"][key]
+        print("commit done")
+        return twopc_pb2.CommitResponse(ack="DONE")
     
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
