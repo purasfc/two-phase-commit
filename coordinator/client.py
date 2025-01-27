@@ -62,24 +62,7 @@ def commit(stub, commit_id, transaction_data):
     
     commit_txn_id = f"txn-{commit_id}"
     transaction_data[commit_txn_id]["state"] = "committed"
-
-def two_phase_commit(stub, commit_id):
-    
-    vote_yes_num = 0
-    
-    id = next_id()
-    
-    vote = stub.CommitQuery(twopc_pb2.CommitQueryMessage(id=id, commit_id=commit_id))
-    
-    if vote == "yes":
-        vote_yes_num += 1
-    
-    id = next_id()
-    
-    if vote_yes_num == len(servers):
-        stub.Commit(twopc_pb2.CommitMessage(id=id))
-    
-    
+        
 
 
 def run():
