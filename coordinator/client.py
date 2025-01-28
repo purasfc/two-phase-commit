@@ -74,6 +74,7 @@ def run():
         stubs.append(stub)
 
     while True:
+        print(transaction_data)
         print(">> ", end="")
         command = input()
         if command == "get":

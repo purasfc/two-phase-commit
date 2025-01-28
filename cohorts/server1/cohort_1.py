@@ -51,7 +51,7 @@ class UpdateServicer(twopc_pb2_grpc.UpdateServicer):
             return twopc_pb2.PutResponse(empty="registration has been successfully done")
         except:
             create_transaction_log(txn_id, "put", putRequest.key, putRequest.value, None, "prepared", grpc.RpcError.details())
-            print(data)
+            
             return twopc_pb2.PutResponse(empty="something is wrong")
         
     def CommitQuery(self, request, context):
@@ -74,6 +74,7 @@ class UpdateServicer(twopc_pb2_grpc.UpdateServicer):
         data["commited"][key] = value
         del data["prepared"][key]
         print("commit done")
+        print(data)
         return twopc_pb2.CommitResponse(ack="DONE")
     
 def serve():
